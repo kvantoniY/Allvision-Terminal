@@ -1,0 +1,102 @@
+.card { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.head { display: flex; gap: 10px; align-items: center; }
+.ava { width: 42px; height: 42px; border-radius: 12px; object-fit: cover; border: 1px solid rgba(255,255,255,0.10); }
+.meta { display: flex; flex-direction: column; }
+.user { font-weight: 900; color: rgba(255,255,255,0.92); text-decoration: none; }
+.time { color: rgba(255,255,255,0.55); font-size: 12px; margin-top: 2px; }
+.text { white-space: pre-wrap; color: rgba(255,255,255,0.88); line-height: 1.4; }
+.media { border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
+.img { width: 100%; height: auto; display: block; }
+.actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+
+.actionGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actionBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.actionBtn:hover { background: rgba(255,255,255,0.07); }
+
+.actionBtnDanger {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  background: rgba(255, 80, 80, 0.12);
+  border: 1px solid rgba(255, 80, 80, 0.18);
+  color: rgba(255,255,255,0.9);
+}
+
+.actionBtnDanger:hover { background: rgba(255, 80, 80, 0.16); }
+
+.actionCount {
+  font-size: 13px;
+  color: rgba(255,255,255,0.72);
+  min-width: 18px;
+}
+
+.openArea {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  outline: none;
+}
+
+.openArea:focus {
+  box-shadow: 0 0 0 4px rgba(124,92,255,0.14);
+  border-radius: 14px;
+}
+
+.repostBadge {
+  display: inline-flex;
+  align-self: flex-start;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.8);
+}
+
+.betBox {
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  padding: 10px;
+}
+
+.betTitle {
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.betMeta {
+  color: rgba(255,255,255,0.75);
+  line-height: 1.35;
+}
+
+.original {
+  border-left: 3px solid rgba(124,92,255,0.55);
+  padding-left: 10px;
+  opacity: 0.95;
+}
+
+.originalTitle {
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.originalText {
+  color: rgba(255,255,255,0.78);
+  white-space: pre-wrap;
+  line-height: 1.35;
+}

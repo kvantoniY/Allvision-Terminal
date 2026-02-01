@@ -1,0 +1,26 @@
+.wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar {
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  object-fit: cover;
+  background: rgba(255,255,255,0.03);
+  display: block;
+}
+
+.presenceDot {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  border: 2px solid rgba(15,15,18,0.95);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+.online { background: #2ecc71; }
+.offline { background: rgba(255,255,255,0.28); }

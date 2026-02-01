@@ -1,0 +1,83 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.62);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  will-change: opacity;
+}
+
+.backdropEnter { opacity: 1; }
+
+.modal {
+  width: min(860px, 100%);
+  max-height: min(86vh, 820px);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(12, 16, 28, 0.96);
+  box-shadow: 0 30px 120px rgba(0,0,0,0.75);
+  overflow: hidden;
+
+  transform: translateY(14px) scale(0.985);
+  opacity: 0.85;
+  transition: transform 180ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease;
+  will-change: transform, opacity;
+}
+
+.modalEnter {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.title {
+  font-weight: 900;
+  font-size: 16px;
+}
+
+.close {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.close:hover {
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.07);
+}
+
+.body {
+  padding: 16px;
+  overflow: auto;
+  max-height: calc(min(86vh, 820px) - 56px);
+scroll-behavior: auto;
+}
+
+.body::-webkit-scrollbar { width: 10px; }
+.body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.14);
+  border-radius: 999px;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop, .modal { transition: none; }
+}

@@ -1,0 +1,50 @@
+.root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  padding: 16px;
+  padding-top: 12px;
+  padding-left: 150px;
+  padding-right: 150px;
+}
+
+.sidebar {
+  position: sticky;
+  top: calc(var(--header-h) + 12px);
+  height: calc(100vh - var(--header-h) - 24px);
+}
+
+.content {
+  min-width: 0;
+}
+
+.bottomNav {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .body {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    padding-bottom: calc(var(--bottomnav-h) + 12px);
+  }
+  .sidebar {
+    display: none;
+  }
+  .bottomNav {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: var(--bottomnav-h);
+    z-index: 900;
+  }
+}

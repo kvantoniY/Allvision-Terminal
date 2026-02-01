@@ -1,0 +1,83 @@
+.wrap { position: relative; width: 100%; }
+.svg {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+}
+
+.grid { stroke: rgba(255,255,255,0.12); stroke-width: 2; }
+
+.lineA {
+  fill: none;
+  stroke: rgba(60, 170, 255, 0.95);
+  stroke-width: 3;
+  filter: drop-shadow(0 10px 18px rgba(60,170,255,0.10));
+}
+
+.lineB {
+  fill: none;
+  stroke: rgba(124, 92, 255, 0.95);
+  stroke-width: 3;
+  filter: drop-shadow(0 10px 18px rgba(124,92,255,0.10));
+}
+
+.cursor {
+  stroke: rgba(255,255,255,0.18);
+  stroke-width: 2;
+  stroke-dasharray: 6 6;
+}
+
+.tooltip {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(15, 23, 36, 0.92);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  animation: pop 160ms ease-out;
+}
+
+@keyframes pop {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.tipX { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.rows { display: flex; flex-direction: column; gap: 6px; }
+.row { display: flex; justify-content: space-between; gap: 12px; }
+.name { font-size: 12px; color: var(--muted); }
+.val { font-size: 13px; }
+
+.legend {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.badgeA, .badgeB {
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(0,0,0,0.18);
+}
+
+.badgeA { color: rgba(60,170,255,0.95); }
+.badgeB { color: rgba(124,92,255,0.95); }
+
+.empty {
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  color: var(--muted);
+}

@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: allvision
+      POSTGRES_PASSWORD: allvision
+      POSTGRES_DB: allvision
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: npm run dev
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgres://allvision:allvision@db:5432/allvision
+      JWT_ACCESS_SECRET: access_secret_change
+      ACCESS_TTL_MIN: 120
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

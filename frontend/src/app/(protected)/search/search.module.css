@@ -1,0 +1,77 @@
+.root { display: flex; flex-direction: column; gap: 12px; }
+
+.top { display: flex; flex-direction: column; gap: 10px; }
+.title { font-size: 22px; font-weight: 900; }
+
+.searchRow { max-width: 720px; }
+
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.tab {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+}
+
+.tabActive {
+  border-color: rgba(124,92,255,0.55);
+  box-shadow: 0 0 0 4px rgba(124,92,255,0.12);
+}
+
+.state {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.65);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card { padding: 14px; border-radius: 14px; }
+
+.users { display: flex; flex-direction: column; gap: 10px; }
+
+.userRow {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+}
+
+.ava {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.meta { min-width: 0; }
+.username { font-weight: 800; color: rgba(255,255,255,0.92); }
+.publicId { margin-top: 2px; font-size: 12px; color: rgba(255,255,255,0.55); }
+
+.openBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.9);
+  text-decoration: none;
+}
+
+.openBtn:hover { background: rgba(255,255,255,0.06); }
+
+.posts { display: flex; flex-direction: column; gap: 10px; }

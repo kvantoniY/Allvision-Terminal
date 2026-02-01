@@ -1,0 +1,2104 @@
+openapi: 3.0.3
+info:
+  title: Allvision Terminal API
+  version: 0.3.0
+  description: >
+    Backend API for Allvision Terminal: terminal sessions/bets + social posts + messages + notifications + charts.
+servers:
+  - url: http://localhost:4000
+tags:
+  - name: Health
+  - name: Auth
+  - name: Users
+  - name: Profile
+  - name: Terminal
+  - name: Charts
+  - name: Posts
+  - name: Messages
+  - name: Notifications
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    PublicIdParam:
+      name: publicId
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: "^[A-Za-z0-9_-]{8,16}$"
+
+    UuidParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    OffsetParam:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
+    RangeParam:
+      name: range
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [7d, 30d, 90d, all]
+        default: all
+
+    FromParam:
+      name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        example: "2026-01-01"
+
+    ToParam:
+      name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        example: "2026-01-10"
+
+    SessionIdQuery:
+      name: sessionId
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    Ok:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]
+
+    UserPublic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Internal UUID (may be omitted in some endpoints)."
+        publicId:
+          type: string
+        username:
+          type: string
+        avatarUrl:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+      required: [publicId, username]
+
+    PrivacySettings:
+      type: object
+      properties:
+        showBets:
+          type: boolean
+        showStats:
+          type: boolean
+        showFollowers:
+          type: boolean
+        allowMessages:
+          type: string
+          enum: [ALL, FOLLOWERS, MUTUAL, NONE]
+      required: [showBets, showStats, showFollowers, allowMessages]
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/UserPublic"
+      required: [token, user]
+
+    BankSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          enum: [OPEN, CLOSED]
+        initialBank:
+          type: number
+        currentBank:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        closedAt:
+          type: string
+          format: date-time
+          nullable: true
+        profit:
+          type: number
+          nullable: true
+          description: "Computed in listSessions (currentBank - initialBank)."
+      required: [id, title, status, initialBank, currentBank, createdAt]
+
+    Bet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sessionId:
+          type: string
+          format: uuid
+        game:
+          type: string
+          enum: [DOTA2, CS2]
+        tournament:
+          type: string
+        team1:
+          type: string
+        team2:
+          type: string
+        pickTeam:
+          type: string
+          nullable: true
+        betType:
+          type: string
+          enum: [HANDICAP, MAP_WIN, MATCH_WIN]
+        bo:
+          type: integer
+          enum: [1, 2, 3, 5]
+        tier:
+          type: integer
+          enum: [1, 2, 3]
+        risk:
+          type: integer
+          enum: [1, 2, 3, 4, 5]
+        odds:
+          type: number
+        recommendedPct:
+          type: number
+        recommendedStake:
+          type: number
+        stake:
+          type: number
+        status:
+          type: string
+          enum: [PENDING, WIN, LOSE]
+        profit:
+          type: number
+        stakingModel:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        settledAt:
+          type: string
+          format: date-time
+          nullable: true
+        Session:
+          $ref: "#/components/schemas/BankSession"
+      required:
+        - id
+        - sessionId
+        - game
+        - tournament
+        - team1
+        - team2
+        - betType
+        - bo
+        - tier
+        - risk
+        - odds
+        - stake
+        - status
+        - profit
+        - createdAt
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [POST, REPOST]
+        text:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        attachedBetId:
+          type: string
+          format: uuid
+          nullable: true
+        originalPostId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        Author:
+          $ref: "#/components/schemas/UserPublic"
+        AttachedBet:
+          $ref: "#/components/schemas/Bet"
+        OriginalPost:
+          $ref: "#/components/schemas/Post"
+        counts:
+          type: object
+          properties:
+            likes:
+              type: integer
+            comments:
+              type: integer
+            reposts:
+              type: integer
+          required: [likes, comments, reposts]
+        flags:
+          type: object
+          properties:
+            meLiked:
+              type: boolean
+            meReposted:
+              type: boolean
+          required: [meLiked, meReposted]
+      required: [id, type, text, createdAt]
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        postId:
+          type: string
+          format: uuid
+        body:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        Author:
+          $ref: "#/components/schemas/UserPublic"
+      required: [id, postId, body, createdAt]
+
+    Dialog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        Members:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserPublic"
+      required: [id, createdAt]
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        dialogId:
+          type: string
+          format: uuid
+        senderId:
+          type: string
+          format: uuid
+        text:
+          type: string
+          nullable: true
+        sharedPostId:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        Sender:
+          $ref: "#/components/schemas/UserPublic"
+        SharedPost:
+          $ref: "#/components/schemas/Post"
+      required: [id, dialogId, senderId, createdAt]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        actorId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [FOLLOW, LIKE_POST, COMMENT_POST, REPOST_POST, MESSAGE]
+        entityId:
+          type: string
+          nullable: true
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        ActorUser:
+          $ref: "#/components/schemas/UserPublic"
+      required: [id, userId, actorId, type, isRead, createdAt]
+
+    Stats:
+      type: object
+      properties:
+        betsTotal:
+          type: integer
+        wins:
+          type: integer
+        losses:
+          type: integer
+        pending:
+          type: integer
+        winrate:
+          type: number
+        stakeSum:
+          type: number
+        profitSum:
+          type: number
+        roi:
+          type: number
+        avgOdds:
+          type: number
+        avgRisk:
+          type: number
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [betsTotal, wins, losses, pending, winrate, stakeSum, profitSum, roi, avgOdds, avgRisk]
+
+    TerminalSummary:
+      type: object
+      properties:
+        query:
+          type: object
+        totals:
+          type: object
+          properties:
+            betsTotal:
+              type: integer
+            wins:
+              type: integer
+            losses:
+              type: integer
+            pending:
+              type: integer
+            winrate:
+              type: number
+            stakeSum:
+              type: number
+            profitSum:
+              type: number
+            roi:
+              type: number
+          required: [betsTotal, wins, losses, pending, winrate, stakeSum, profitSum, roi]
+        highlights:
+          type: object
+          properties:
+            bestTeam:
+              type: object
+              nullable: true
+              properties:
+                team:
+                  type: string
+                profitSum:
+                  type: number
+                n:
+                  type: integer
+            bestOddsBet:
+              nullable: true
+              $ref: "#/components/schemas/Bet"
+            biggestWinBet:
+              nullable: true
+              $ref: "#/components/schemas/Bet"
+            biggestLossBet:
+              nullable: true
+              $ref: "#/components/schemas/Bet"
+        discipline:
+          type: object
+          properties:
+            avgDeviationPct:
+              type: number
+            devOver10PctShare:
+              type: number
+            n:
+              type: integer
+          required: [avgDeviationPct, devOver10PctShare, n]
+      required: [totals, discipline]
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      security: []
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required: [username, password]
+      responses:
+        "200":
+          description: Auth token + user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required: [username, password]
+      responses:
+        "200":
+          description: Auth token + user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPublic"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get my user profile (private fields may be included by server)
+      responses:
+        "200":
+          description: Me
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPublic"
+
+  /users/search:
+    get:
+      tags: [Users]
+      summary: Search users by username
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/LimitParam"
+      responses:
+        "200":
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserPublic"
+                required: [users]
+
+  /users/u/{publicId}:
+    get:
+      tags: [Users]
+      summary: Get user by publicId
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/UserPublic"
+                required: [user]
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/u/{publicId}/follow:
+    post:
+      tags: [Users]
+      summary: Follow user
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+    delete:
+      tags: [Users]
+      summary: Unfollow user
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+
+  /users/u/{publicId}/blacklist:
+    post:
+      tags: [Users]
+      summary: Add user to blacklist
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+    delete:
+      tags: [Users]
+      summary: Remove user from blacklist
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+
+  /users/me/blacklist:
+    get:
+      tags: [Users]
+      summary: My blacklist
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserPublic"
+                required: [users]
+
+  /users/u/{publicId}/followers:
+    get:
+      tags: [Users]
+      summary: Followers list (respects showFollowers)
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+      responses:
+        "200":
+          description: Followers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  followers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserPublic"
+                required: [followers]
+        "403":
+          description: Private
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/u/{publicId}/following:
+    get:
+      tags: [Users]
+      summary: Following list (respects showFollowers)
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+      responses:
+        "200":
+          description: Following
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  following:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserPublic"
+                required: [following]
+        "403":
+          description: Private
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /profile/u/{publicId}:
+    get:
+      tags: [Profile]
+      summary: Profile bundle (user + meta + relationship flags)
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+      responses:
+        "200":
+          description: Profile bundle
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    allOf:
+                      - $ref: "#/components/schemas/UserPublic"
+                      - type: object
+                        properties:
+                          privacy:
+                            $ref: "#/components/schemas/PrivacySettings"
+                  meta:
+                    type: object
+                    properties:
+                      followersCount:
+                        type: integer
+                      followingCount:
+                        type: integer
+                      sessionsCount:
+                        type: integer
+                      betsCount:
+                        type: integer
+                    required: [followersCount, followingCount, sessionsCount, betsCount]
+                  relationship:
+                    type: object
+                    properties:
+                      isMe:
+                        type: boolean
+                      amFollowing:
+                        type: boolean
+                      isFollowingMe:
+                        type: boolean
+                      isMutual:
+                        type: boolean
+                      iBlocked:
+                        type: boolean
+                      blockedMe:
+                        type: boolean
+                      canMessage:
+                        type: boolean
+                    required: [isMe, amFollowing, isFollowingMe, isMutual, iBlocked, blockedMe, canMessage]
+                required: [user, meta, relationship]
+        "404":
+          description: Not found (hidden if blocked)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /profile/u/{publicId}/bets:
+    get:
+      tags: [Profile]
+      summary: Profile bets (respects showBets)
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SessionIdQuery"
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDING, WIN, LOSE]
+        - name: game
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DOTA2, CS2]
+        - name: tier
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [1, 2, 3]
+        - name: risk
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [1, 2, 3, 4, 5]
+        - $ref: "#/components/parameters/FromParam"
+        - $ref: "#/components/parameters/ToParam"
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [createdAt, odds, profit, stake, risk, tier]
+            default: createdAt
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        "200":
+          description: Bets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Bet"
+                  page:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                    required: [limit, offset]
+                  query:
+                    type: object
+                required: [items, page]
+        "403":
+          description: Private
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /profile/u/{publicId}/stats:
+    get:
+      tags: [Profile]
+      summary: Profile stats (respects showStats)
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+        - $ref: "#/components/parameters/RangeParam"
+        - $ref: "#/components/parameters/SessionIdQuery"
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      publicId:
+                        type: string
+                      username:
+                        type: string
+                    required: [publicId, username]
+                  range:
+                    type: string
+                  sessionId:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  stats:
+                    $ref: "#/components/schemas/Stats"
+                required: [user, range, sessionId, stats]
+        "403":
+          description: Private
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /terminal/sessions:
+    post:
+      tags: [Terminal]
+      summary: Create session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                initialBank:
+                  type: number
+              required: [title, initialBank]
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    $ref: "#/components/schemas/BankSession"
+                required: [session]
+    get:
+      tags: [Terminal]
+      summary: List sessions (search/sort/filter)
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [OPEN, CLOSED]
+        - name: profit
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [plus, minus]
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [createdAt, currentBank, profit]
+            default: createdAt
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          description: Sessions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BankSession"
+                  page:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                    required: [limit, offset]
+                required: [items, page]
+
+  /terminal/sessions/{id}:
+    get:
+      tags: [Terminal]
+      summary: Get session by id (includes bets)
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    allOf:
+                      - $ref: "#/components/schemas/BankSession"
+                      - type: object
+                        properties:
+                          Bets:
+                            type: array
+                            items:
+                              $ref: "#/components/schemas/Bet"
+                required: [session]
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Terminal]
+      summary: Delete session (only if empty)
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "409":
+          description: Cannot delete non-empty
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /terminal/sessions/{id}/close:
+    post:
+      tags: [Terminal]
+      summary: Close session
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      responses:
+        "200":
+          description: Closed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  session:
+                    $ref: "#/components/schemas/BankSession"
+                required: [ok, session]
+
+  /terminal/sessions/{id}/bets:
+    post:
+      tags: [Terminal]
+      summary: Add bet to session (creates PENDING; calculates recommendation)
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                game:
+                  type: string
+                  enum: [DOTA2, CS2]
+                tournament:
+                  type: string
+                team1:
+                  type: string
+                team2:
+                  type: string
+                pickTeam:
+                  type: string
+                  nullable: true
+                betType:
+                  type: string
+                  enum: [HANDICAP, MAP_WIN, MATCH_WIN]
+                bo:
+                  type: integer
+                  enum: [1, 2, 3, 5]
+                tier:
+                  type: integer
+                  enum: [1, 2, 3]
+                risk:
+                  type: integer
+                  enum: [1, 2, 3, 4, 5]
+                odds:
+                  type: number
+                stake:
+                  type: number
+              required: [game, tournament, team1, team2, betType, bo, tier, risk, odds, stake]
+      responses:
+        "201":
+          description: Created bet + recommendation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bet:
+                    $ref: "#/components/schemas/Bet"
+                  recommendation:
+                    type: object
+                    properties:
+                      recommendedPct:
+                        type: number
+                      recommendedStake:
+                        type: number
+                      stakingModel:
+                        type: string
+                    required: [recommendedPct, recommendedStake, stakingModel]
+                required: [bet, recommendation]
+        "409":
+          description: Session closed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /terminal/bets:
+    get:
+      tags: [Terminal]
+      summary: Unified bets list (filters/search/sort/pagination)
+      parameters:
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SessionIdQuery"
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDING, WIN, LOSE]
+        - name: game
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DOTA2, CS2]
+        - name: tier
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [1, 2, 3]
+        - name: risk
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [1, 2, 3, 4, 5]
+        - $ref: "#/components/parameters/FromParam"
+        - $ref: "#/components/parameters/ToParam"
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [createdAt, odds, profit, stake, risk, tier]
+            default: createdAt
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        "200":
+          description: Bets list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Bet"
+                  page:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                    required: [limit, offset]
+                  summary:
+                    type: object
+                    properties:
+                      wins:
+                        type: integer
+                      losses:
+                        type: integer
+                      pending:
+                        type: integer
+                      winrate:
+                        type: number
+                      stakeSum:
+                        type: number
+                      profitSum:
+                        type: number
+                      roi:
+                        type: number
+                    required: [wins, losses, pending, winrate, stakeSum, profitSum, roi]
+                required: [items, page, summary]
+
+  /terminal/bets/{id}/settle:
+    post:
+      tags: [Terminal]
+      summary: Settle bet (WIN/LOSE) and update session bank
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                result:
+                  type: string
+                  enum: [WIN, LOSE]
+              required: [result]
+      responses:
+        "200":
+          description: Updated bet and session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bet:
+                    $ref: "#/components/schemas/Bet"
+                  session:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      currentBank:
+                        type: number
+                    required: [id, currentBank]
+                required: [bet, session]
+        "409":
+          description: Session closed or already settled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /terminal/bets/{id}:
+    delete:
+      tags: [Terminal]
+      summary: Delete bet (only PENDING and session OPEN)
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+        "409":
+          description: Not allowed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /terminal/summary:
+    get:
+      tags: [Terminal]
+      summary: Terminal summary (aggregations over the whole filtered dataset)
+      parameters:
+        - $ref: "#/components/parameters/SessionIdQuery"
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [PENDING, WIN, LOSE]
+        - name: game
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DOTA2, CS2]
+        - name: tier
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [1, 2, 3]
+        - name: risk
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum: [1, 2, 3, 4, 5]
+        - $ref: "#/components/parameters/FromParam"
+        - $ref: "#/components/parameters/ToParam"
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TerminalSummary"
+
+  /charts/equity:
+    get:
+      tags: [Charts]
+      summary: Equity chart (bank curve)
+      parameters:
+        - $ref: "#/components/parameters/SessionIdQuery"
+        - $ref: "#/components/parameters/RangeParam"
+        - $ref: "#/components/parameters/FromParam"
+        - $ref: "#/components/parameters/ToParam"
+        - name: bucket
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [bet, day, week, month]
+            default: day
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [total, session]
+      responses:
+        "200":
+          description: Points
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chart:
+                    type: string
+                  mode:
+                    type: string
+                  bucket:
+                    type: string
+                  sessionId:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  bankStart:
+                    type: number
+                  points:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        t:
+                          type: string
+                        bank:
+                          type: number
+                      required: [t, bank]
+                required: [chart, bucket, points]
+
+  /charts/profit:
+    get:
+      tags: [Charts]
+      summary: Profit chart (cumulative or period)
+      parameters:
+        - $ref: "#/components/parameters/SessionIdQuery"
+        - $ref: "#/components/parameters/RangeParam"
+        - $ref: "#/components/parameters/FromParam"
+        - $ref: "#/components/parameters/ToParam"
+        - name: bucket
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [bet, day, week, month]
+            default: day
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [cumulative, period]
+            default: cumulative
+      responses:
+        "200":
+          description: Points
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chart:
+                    type: string
+                  mode:
+                    type: string
+                  bucket:
+                    type: string
+                  sessionId:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  points:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        t:
+                          type: string
+                        profit:
+                          type: number
+                      required: [t, profit]
+                required: [chart, bucket, points]
+
+  /charts/drawdown:
+    get:
+      tags: [Charts]
+      summary: Drawdown chart
+      parameters:
+        - $ref: "#/components/parameters/SessionIdQuery"
+        - $ref: "#/components/parameters/RangeParam"
+        - $ref: "#/components/parameters/FromParam"
+        - $ref: "#/components/parameters/ToParam"
+        - name: bucket
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [bet, day, week, month]
+            default: day
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [total, session]
+      responses:
+        "200":
+          description: Points
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chart:
+                    type: string
+                  mode:
+                    type: string
+                  bucket:
+                    type: string
+                  sessionId:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  bankStart:
+                    type: number
+                  points:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        t:
+                          type: string
+                        drawdownAbs:
+                          type: number
+                        drawdownPct:
+                          type: number
+                        peak:
+                          type: number
+                        bank:
+                          type: number
+                      required: [t, drawdownAbs, drawdownPct, peak, bank]
+                required: [chart, bucket, points]
+
+  /charts/stake-deviation:
+    get:
+      tags: [Charts]
+      summary: Stake deviation vs recommended
+      parameters:
+        - $ref: "#/components/parameters/SessionIdQuery"
+        - $ref: "#/components/parameters/RangeParam"
+        - $ref: "#/components/parameters/FromParam"
+        - $ref: "#/components/parameters/ToParam"
+        - name: bucket
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [bet, day, week, month]
+            default: day
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [avg, bet]
+            default: avg
+      responses:
+        "200":
+          description: Points
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chart:
+                    type: string
+                  mode:
+                    type: string
+                  bucket:
+                    type: string
+                  sessionId:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  points:
+                    type: array
+                    items:
+                      type: object
+                required: [chart, mode, points]
+
+  /charts/winrate:
+    get:
+      tags: [Charts]
+      summary: Winrate chart (period/cumulative/rolling)
+      parameters:
+        - $ref: "#/components/parameters/SessionIdQuery"
+        - $ref: "#/components/parameters/RangeParam"
+        - $ref: "#/components/parameters/FromParam"
+        - $ref: "#/components/parameters/ToParam"
+        - name: bucket
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [bet, day, week, month]
+            default: day
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [period, cumulative, rolling]
+            default: period
+        - name: window
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 2
+            maximum: 200
+            default: 20
+      responses:
+        "200":
+          description: Points
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  chart:
+                    type: string
+                  mode:
+                    type: string
+                  bucket:
+                    type: string
+                  window:
+                    type: integer
+                    nullable: true
+                  sessionId:
+                    type: string
+                    format: uuid
+                    nullable: true
+                  points:
+                    type: array
+                    items:
+                      type: object
+                required: [chart, mode, points]
+
+  /posts:
+    post:
+      tags: [Posts]
+      summary: Create post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                imageUrl:
+                  type: string
+                  nullable: true
+                attachedBetId:
+                  type: string
+                  format: uuid
+                  nullable: true
+              required: [text]
+      responses:
+        "201":
+          description: Post
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/Post"
+                required: [post]
+
+  /posts/feed:
+    get:
+      tags: [Posts]
+      summary: Feed (all or following)
+      parameters:
+        - name: scope
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, following]
+            default: all
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          description: Posts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Post"
+                  page:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                    required: [limit, offset]
+                required: [items, page]
+
+  /posts/search:
+    get:
+      tags: [Posts]
+      summary: Search posts by keywords
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          description: Posts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Post"
+                  page:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                    required: [limit, offset]
+                required: [items, page]
+
+  /posts/user/u/{publicId}:
+    get:
+      tags: [Posts]
+      summary: User posts feed (posts/reposts/all)
+      parameters:
+        - $ref: "#/components/parameters/PublicIdParam"
+        - name: filter
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, posts, reposts]
+            default: all
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          description: Posts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Post"
+                  page:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                    required: [limit, offset]
+                required: [items, page]
+
+  /posts/{id}:
+    get:
+      tags: [Posts]
+      summary: Get post by id
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      responses:
+        "200":
+          description: Post
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/Post"
+                required: [post]
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /posts/{id}/like:
+    post:
+      tags: [Posts]
+      summary: Like post (likes base/original)
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+    delete:
+      tags: [Posts]
+      summary: Unlike post (base/original)
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+
+  /posts/{id}/comments:
+    get:
+      tags: [Posts]
+      summary: List comments
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          description: Comments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Comment"
+                  page:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                    required: [limit, offset]
+                required: [items, page]
+    post:
+      tags: [Posts]
+      summary: Add comment
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+              required: [body]
+      responses:
+        "201":
+          description: Comment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  comment:
+                    $ref: "#/components/schemas/Comment"
+                required: [comment]
+
+  /posts/{id}/repost:
+    post:
+      tags: [Posts]
+      summary: Repost (creates REPOST)
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        "201":
+          description: Repost created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/Post"
+                required: [post]
+
+  /messages/dialogs:
+    get:
+      tags: [Messages]
+      summary: List dialogs
+      responses:
+        "200":
+          description: Dialogs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                required: [items]
+
+  /messages/dialogs/{id}:
+    get:
+      tags: [Messages]
+      summary: Get dialog by id
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      responses:
+        "200":
+          description: Dialog
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  dialog:
+                    $ref: "#/components/schemas/Dialog"
+                required: [dialog]
+
+  /messages/dialogs/{id}/messages:
+    get:
+      tags: [Messages]
+      summary: Get messages (pagination)
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Message"
+                  page:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                    required: [limit, offset]
+                required: [items, page]
+
+  /messages/send:
+    post:
+      tags: [Messages]
+      summary: Send message (creates/uses dialog)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                toPublicId:
+                  type: string
+                text:
+                  type: string
+                  nullable: true
+                sharedPostId:
+                  type: string
+                  format: uuid
+                  nullable: true
+              required: [toPublicId]
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    $ref: "#/components/schemas/Message"
+                required: [message]
+
+  /messages/dialogs/{id}/read:
+    post:
+      tags: [Messages]
+      summary: Mark dialog as read
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications
+      parameters:
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/OffsetParam"
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+                  page:
+                    type: object
+                    properties:
+                      limit:
+                        type: integer
+                      offset:
+                        type: integer
+                    required: [limit, offset]
+                required: [items, page]
+
+  /notifications/unread-count:
+    get:
+      tags: [Notifications]
+      summary: Unread notifications count
+      responses:
+        "200":
+          description: Count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unread:
+                    type: integer
+                required: [unread]
+
+  /notifications/{id}/read:
+    post:
+      tags: [Notifications]
+      summary: Mark notification as read
+      parameters:
+        - $ref: "#/components/parameters/UuidParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ok"

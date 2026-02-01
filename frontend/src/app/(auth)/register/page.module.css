@@ -1,0 +1,6 @@
+.card { width: 100%; max-width: 420px; padding: 15px}
+.title { margin: 0 0 12px; font-size: 22px; }
+.form { display: grid; gap: 12px; }
+.error { color: #ffb4b4; font-size: 13px; }
+.hint { font-size: 13px; color: var(--muted); }
+.hint a { color: var(--text); }

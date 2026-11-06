@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -31,7 +31,7 @@ function pickPosts(data) {
   return [];
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const sp = useSearchParams();
   const initialQ = sp.get('q') || '';
   const initialTab = sp.get('tab') || 'users';
@@ -142,4 +142,8 @@ export default function SearchPage() {
       )}
     </div>
   );
+}
+
+export default function SearchPage() {
+  return <Suspense fallback={<Spinner />}><SearchContent /></Suspense>;
 }
